@@ -1,641 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NokOut: Legacy Edition</title>
-    <style>
-        :root { --primary: #00acc1; --accent: #ffaa00; --bg: #002b36; --danger: #ff4444; }
-        body { background: var(--bg); color: white; font-family: 'Arial Black', sans-serif; margin: 0; overflow: hidden; touch-action: none; user-select: none; }
-        
-        #ui-header {
-            position: absolute; top: 0; width: 100%; height: 70px;
-            background: rgba(0, 10, 20, 0.95); display: flex; 
-            align-items: center; justify-content: space-between;
-            padding: 0 30px; box-sizing: border-box; 
-            border-bottom: 4px solid var(--primary); z-index: 100;
-        }
-
-        .stat { color: var(--primary); font-size: 22px; text-shadow: 2px 2px 0px #000; }
-        .stat span { color: white; }
-
-        #wheel-container {
-            position: absolute; left: 40px; top: 50%; transform: translateY(-50%);
-            text-align: center; z-index: 150;
-        }
-        #wheel-canvas { 
-            width: 240px; height: 240px; border-radius: 50%; 
-            border: 6px solid var(--primary); background: #001a22;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5); transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
-        }
-        #wheel-pointer {
-            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
-            width: 0; height: 0; border-left: 15px solid transparent;
-            border-right: 15px solid transparent; border-top: 25px solid var(--danger);
-            z-index: 160;
-        }
-
-        #mobile-controls {
-            position: absolute; bottom: 30px; width: 100%; 
-            display: flex; justify-content: center; align-items: center; 
-            gap: 20px; z-index: 100;
-        }
-
-        .ctrl-btn {
-            width: 75px; height: 75px; background: var(--primary); 
-            border: 4px solid #fff; border-radius: 20px; 
-            color: white; font-size: 36px; display: flex; 
-            justify-content: center; align-items: center; 
-            cursor: pointer; box-shadow: 0 6px 0 #007c91;
-        }
-
-        #power-box {
-            background: rgba(0,0,0,0.9); padding: 15px 30px; border-radius: 25px;
-            border: 3px solid var(--accent); font-size: 28px; color: var(--accent);
-            min-width: 160px; text-align: center;
-        }
-
-        .overlay {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(5, 15, 25, 0.98); padding: 30px; border-radius: 35px;
-            border: 6px solid var(--primary); width: 90%; max-width: 750px;
-            text-align: center; z-index: 200; box-shadow: 0 0 100px rgba(0,0,0,0.8);
-            max-height: 85vh; overflow-y: auto;
-        }
-
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; padding: 10px; }
-
-        .card {
-            background: rgba(255,255,255,0.08); padding: 15px; border-radius: 20px;
-            border: 3px solid transparent; cursor: pointer; transition: 0.2s;
-            display: flex; flex-direction: column; align-items: center;
-        }
-        .card:hover { background: rgba(255,255,255,0.15); border-color: var(--primary); }
-        .card.equipped { background: var(--primary); border-color: white; }
-        .card.locked { opacity: 0.5; filter: grayscale(1); cursor: default; }
-        
-        .btn {
-            padding: 15px 35px; font-size: 20px; cursor: pointer;
-            background: var(--primary); color: white; border: none; 
-            border-radius: 20px; font-family: inherit; margin: 8px;
-            box-shadow: 0 6px 0 #007c91;
-        }
-        .btn-buy { background: var(--accent); box-shadow: 0 6px 0 #cc8800; width: 90%; font-size: 24px;}
-
-        #kill-feed { position: absolute; right: 20px; top: 90px; width: 320px; z-index: 50; pointer-events: none; }
-        .feed-item { background: rgba(0,0,0,0.85); padding: 12px; border-radius: 10px; margin-bottom: 8px; border-left: 6px solid var(--primary); font-size: 14px; text-align: right; }
-        canvas { border-radius: 20px; max-width: 95%; max-height: 75vh; }
-        .hidden { display: none !important; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pokemon Pack Opener</title>
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+  <div class="app-shell">
+    <section id="menu-screen" class="screen menu-screen is-active" aria-label="Main menu">
+      <div class="menu-hero">
+        <p class="eyebrow">Pokemon Pack Opener</p>
+        <h1>Pokemon Pack Opener</h1>
 
-    <div id="ui-header">
-        <div style="display:flex; gap:20px;">
-            <div class="stat">🧊 <span id="iceTxt">100</span></div>
-            <div class="stat">🏆 <span id="winTxt">0</span></div>
-            <div class="stat">🥊 <span id="koTxt">0</span></div>
+        <div class="menu-actions">
+          <button id="open-pack-button" class="primary-button big-button" type="button">Packs</button>
+          <button id="open-collection-button" class="secondary-button big-button" type="button">Collection</button>
         </div>
-        <div class="stat">⏱️ <span id="timerTxt">10</span>s</div>
-        <div class="stat">RD: <span id="roundTxt">1/10</span></div>
-    </div>
+      </div>
 
-    <div id="wheel-container">
-        <div id="wheel-pointer"></div>
-        <canvas id="wheel-canvas" width="300" height="300"></canvas><br>
-        <button id="spinBtn" class="btn" style="padding:10px 20px; font-size:16px; margin-top:15px;">SPIN (FREE)</button>
-    </div>
+      <div class="menu-sidebar">
+        <section class="booklet-panel" aria-label="Booklet shelf">
+          <div class="booklet-panel-header">
+            <div>
+              <p class="eyebrow">Booklets</p>
+              <h2 id="booklet-active-name">Your Cards</h2>
+            </div>
+          </div>
+          <div id="booklet-preview" class="booklet-preview"></div>
+        </section>
+      </div>
+    </section>
 
-    <div id="mobile-controls" class="hidden">
-        <div class="ctrl-btn" id="btnQ">Q</div>
-        <div id="power-box">SPEED: 5</div>
-        <div class="ctrl-btn" id="btnE">E</div>
-    </div>
-
-    <div id="menu-screen" class="overlay">
-        <h1 style="font-size: 60px; color: var(--primary); margin: 0; letter-spacing: 2px;">NokOut</h1>
-        <p style="letter-spacing: 4px; margin-bottom: 30px; font-size: 14px;">ULTIMATE LEGACY EDITION</p>
-        <button id="playBtn" class="btn">START BATTLE</button><br>
-        <button id="shopBtn" class="btn" style="background: var(--accent);">SHOP</button>
-        <button id="skinsBtn" class="btn" style="background: #9944ff;">SKINS</button>
-    </div>
-
-    <div id="shop-screen" class="overlay hidden">
-        <h2 style="color:var(--accent); margin:0;">EGG EMPORIUM</h2>
-        <div id="shop-main">
-            <div class="grid" id="eggGrid"></div>
-            
-            <h3 style="color:var(--primary); border-top: 2px solid #333; padding-top: 15px; margin-top:30px;">EXCLUSIVE SKINS</h3>
-            <p style="font-size: 12px; color: #888;">Unbuyable Rewards</p>
-            <div class="grid" id="exclusiveGrid"></div>
-
-            <hr style="border:0; border-top:1px solid #333; margin: 20px 0;">
-            <button onclick="closeOverlay()" class="btn">BACK</button>
+    <section id="packs-screen" class="screen packs-screen" aria-label="Packs">
+      <header class="packs-header">
+        <div class="collection-heading">
+          <button id="packs-back-button" class="secondary-button" type="button">Menu</button>
+          <div>
+            <p class="eyebrow">Choose a pack</p>
+            <h2>Packs</h2>
+          </div>
         </div>
-        <div id="shop-preview" class="hidden">
-            <h3 id="previewTitle" style="color:var(--primary)"></h3>
-            <div id="previewList" style="background:rgba(255,255,255,0.05); border-radius:15px; margin: 20px 0; padding:10px;"></div>
-            <button id="confirmBuyBtn" class="btn btn-buy">BUY EGG</button><br>
-            <button onclick="togglePreview(false)" class="btn" style="background:#444;">BACK</button>
+        <input id="packs-search-input" class="collection-search-input" type="search" autocomplete="off" placeholder="Search packs or series" aria-label="Search packs">
+      </header>
+
+      <div class="packs-layout">
+        <div id="packs-grid" class="packs-grid" aria-label="Pack list"></div>
+        <aside id="pack-detail" class="pack-detail" aria-label="Pack details"></aside>
+      </div>
+    </section>
+
+    <section id="pack-screen" class="screen pack-screen" aria-label="Pack opening">
+      <div id="pack-fade-overlay" class="pack-fade-overlay" aria-hidden="true"></div>
+
+      <div class="pack-topline">
+        <span id="pack-progress" class="pack-progress">0 / 10</span>
+        <p id="pack-instruction" class="pack-instruction">Click the pack to reveal the next card.</p>
+      </div>
+
+      <div class="pack-stage-shell">
+        <button id="pack-stage" class="pack-stage" type="button" aria-live="polite">
+          <div id="pack-stage-content" class="pack-stage-content"></div>
+        </button>
+        <div id="pack-summary-heading" class="pack-summary-heading" aria-live="polite"></div>
+      </div>
+
+      <div id="revealed-tray" class="revealed-tray"></div>
+
+      <div id="pack-summary-actions" class="pack-summary-actions">
+        <button id="pack-open-another-button" class="corner-button" type="button">Open Another</button>
+        <button id="pack-back-to-packs-button" class="corner-button secondary-corner-button" type="button">Back to Pack Page</button>
+      </div>
+    </section>
+
+    <section id="collection-screen" class="screen collection-screen" aria-label="Collection">
+      <header class="collection-header">
+        <div class="collection-heading">
+          <button id="collection-back-button" class="secondary-button" type="button">Menu</button>
+          <div>
+            <p class="eyebrow">Your Collection</p>
+            <h2>Every card you have pulled lives here.</h2>
+          </div>
         </div>
+
+        <div class="collection-summary">
+          <article class="stat-card compact">
+            <span>Packs opened</span>
+            <strong id="collection-packs-opened-count">0</strong>
+          </article>
+          <article class="stat-card compact">
+            <span>Cards found</span>
+            <strong id="collection-saved-count">0</strong>
+          </article>
+          <article class="stat-card compact">
+            <span>Favorited</span>
+            <strong id="collection-favorite-count">0</strong>
+          </article>
+          <article class="stat-card compact">
+            <span>Booklets</span>
+            <strong id="collection-booklet-count">0</strong>
+          </article>
+        </div>
+
+        <div class="collection-controls">
+          <button id="all-filter-button" class="filter-button is-active" type="button">All Cards</button>
+          <button id="favorites-filter-button" class="filter-button" type="button">Favorites</button>
+          <input id="collection-search-input" class="collection-search-input" type="search" autocomplete="off" placeholder="Search Pokemon" aria-label="Search collection">
+          <label class="collection-sort-shell">
+            <span>Sort</span>
+            <select id="collection-sort-select" aria-label="Sort collection">
+              <option value="price-desc">Price High to Low</option>
+              <option value="price-asc">Price Low to High</option>
+              <option value="favorites">Favorited</option>
+              <option value="booklet">By Booklet</option>
+            </select>
+          </label>
+          <button id="refresh-prices-button" class="secondary-button" type="button">Refresh Prices</button>
+          <button id="clear-collection-button" class="secondary-button danger-button" type="button">Clear Collection</button>
+        </div>
+      </header>
+
+      <p id="pricing-status" class="pricing-status">Loading collection...</p>
+      <div id="collection-grid" class="collection-grid"></div>
+    </section>
+
+    <div id="card-zoom-modal" class="card-zoom-modal" aria-hidden="true">
+      <button id="card-zoom-backdrop" class="card-zoom-backdrop" type="button" aria-label="Close card zoom"></button>
+      <div class="card-zoom-shell">
+        <button id="card-zoom-close" class="card-zoom-close" type="button">Close</button>
+        <div id="card-zoom-content" class="card-zoom-content"></div>
+      </div>
     </div>
+  </div>
 
-    <div id="skins-screen" class="overlay hidden">
-        <h2 style="color:#9944ff; margin:0;">MY COLLECTION</h2>
-        <div class="grid" id="skinGrid"></div>
-        <hr style="border:0; border-top:1px solid #333; margin: 20px 0;">
-        <button onclick="deleteProgress()" class="btn" style="background: #ff4444; font-size: 12px;">DELETE PROGRESS</button><br>
-        <button onclick="closeOverlay()" class="btn">BACK</button>
-    </div>
-
-    <div id="win-screen" class="overlay hidden">
-        <h1 id="winStatus" style="font-size: 50px;">VICTORY!</h1>
-        <p id="winnerDisplay" style="font-size: 28px; color:var(--primary)"></p>
-        <p style="font-size:20px;">Earned <span id="rewardIce" style="color:var(--primary)">0</span> Ice!</p>
-        <button onclick="location.reload()" class="btn">REPLAY</button>
-    </div>
-
-    <div id="kill-feed"></div>
-    <div style="display:flex; justify-content:center; align-items:center; height:100vh;">
-        <canvas id="gameCanvas" width="850" height="600"></canvas>
-    </div>
-
-<script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-
-let state = { ice: 100, wins: 0, kos: 0, round: 1, timer: 10, phase: 'menu', players: [], iceSize: { w: 560, h: 560 }, lastTime: performance.now(), spinning: false };
-
-const RADIUS = 31; 
-const FRICTION = 0.97;
-const SPEED_MULT = 1.8; 
-
-const EGGS = {
-    color: { name: "Color Egg", cost: 60, icon: "🥚", pool: [
-        {color: '#ff4444', name: 'Red', chance: 15, type: 'basic'}, 
-        {color: '#ff8800', name: 'Orange', chance: 15, type: 'basic'},
-        {color: '#ffff00', name: 'Yellow', chance: 15, type: 'basic'}, 
-        {color: '#44ff44', name: 'Green', chance: 15, type: 'basic'},
-        {color: '#44bbff', name: 'Blue', chance: 15, type: 'basic'}, 
-        {color: '#9944ff', name: 'Purple', chance: 15, type: 'basic'},
-        {color: '#ff69b4', name: 'Pink', chance: 10, type: 'basic'}
-    ]},
-    pastel: { name: "Pastel Egg", cost: 150, icon: "🎨", pool: [
-        {color: '#ffb3b3', name: 'Pastel Red', chance: 14.3, type: 'pastel'},
-        {color: '#ffd9b3', name: 'Pastel Orange', chance: 14.3, type: 'pastel'},
-        {color: '#ffffcc', name: 'Pastel Yellow', chance: 14.3, type: 'pastel'},
-        {color: '#ccffcc', name: 'Pastel Green', chance: 14.3, type: 'pastel'},
-        {color: '#cce6ff', name: 'Pastel Blue', chance: 14.3, type: 'pastel'},
-        {color: '#e6ccff', name: 'Pastel Purple', chance: 14.3, type: 'pastel'},
-        {color: '#ffccf2', name: 'Pastel Pink', chance: 14.2, type: 'pastel'}
-    ]},
-    neon: { name: "Neon Egg", cost: 300, icon: "🚨", pool: [
-        {color: '#ff0055', name: 'Neon Red', chance: 14.3, type: 'neon'},
-        {color: '#ff9900', name: 'Neon Orange', chance: 14.3, type: 'neon'},
-        {color: '#ccff00', name: 'Neon Yellow', chance: 14.3, type: 'neon'},
-        {color: '#00ff66', name: 'Neon Green', chance: 14.3, type: 'neon'},
-        {color: '#00ffff', name: 'Neon Blue', chance: 14.3, type: 'neon'},
-        {color: '#9900ff', name: 'Neon Purple', chance: 14.3, type: 'neon'},
-        {color: '#ff00ff', name: 'Neon Pink', chance: 14.2, type: 'neon'}
-    ]},
-    gem: { name: "Gem Egg", cost: 450, icon: "💎", pool: [
-        {color: '#cd7f32', name: 'Bronze', chance: 55, type: 'gem'},
-        {color: '#c0c0c0', name: 'Silver', chance: 20, type: 'gem'},
-        {color: '#ffd700', name: 'Gold', chance: 10, type: 'gem'},
-        {color: '#e0ffff', name: 'Diamond', chance: 10, type: 'gem'},
-        {color: '#e0115f', name: 'Ruby', chance: 3, type: 'gem'},
-        {color: '#50c878', name: 'Emerald', chance: 2, type: 'gem'}
-    ]},
-    fruit: { name: "Fruit Egg", cost: 600, icon: "🍎", pool: [
-        {color: '#ff8800', name: 'Orange Fruit', chance: 35, type: 'fruit'},
-        {color: '#ff2222', name: 'Apple', chance: 25, type: 'fruit'},
-        {color: '#8b4513', name: 'Kiwi', chance: 25, type: 'fruit'},
-        {color: '#22cc22', name: 'Watermelon', chance: 10, type: 'fruit'},
-        {color: '#ffff33', name: 'Banana', chance: 5, type: 'fruit'}
-    ]},
-    icecream: { name: "Cream Egg", cost: 750, icon: "🍦", pool: [
-        {color: '#f3e5ab', name: 'Vanilla', chance: 57, type: 'icecream'},
-        {color: '#7b3f00', name: 'Chocolate', chance: 33, type: 'icecream'},
-        {color: '#ffb7c5', name: 'Strawberry', chance: 7, type: 'icecream'},
-        {color: '#cb9d06', name: 'Cookie Dough', chance: 2, type: 'icecream'},
-        {color: '#f0f0f0', name: 'Cookies n Cream', chance: 1, type: 'icecream'}
-    ]}
-};
-
-const EXCLUSIVE_SKINS = [
-    { name: "Rainbow", type: "rainbow", color: "#fff", source: "Wheel Reward" },
-    { name: "Aurora", type: "aurora", color: "#1a1a2e", source: "Wheel Reward" },
-    { name: "King", type: "special", color: "#1a1a2e", source: "10 Wins", req: 10, reqType: 'wins' },
-    { name: "Boxer", type: "special", color: "#1a1a2e", source: "25 KOs", req: 25, reqType: 'kos' }
-];
-
-const WHEEL_REWARDS = [
-    { name: "30 Ice", type: "ice", val: 30, chance: 40, color: "#ff4444" },
-    { name: "75 Ice", type: "ice", val: 75, chance: 30, color: "#44ff44" },
-    { name: "150 Ice", type: "ice", val: 150, chance: 20, color: "#44bbff" },
-    { name: "500 Ice", type: "ice", val: 500, chance: 5, color: "#ffaa00" },
-    { name: "Rainbow", type: "skin", val: EXCLUSIVE_SKINS[0], chance: 3, color: "#ff00ff" },
-    { name: "Aurora", type: "skin", val: EXCLUSIVE_SKINS[1], chance: 2, color: "#9900ff" }
-];
-
-const INITIAL_SKIN = {color: '#1a1a2e', name: 'Black', type: 'basic'};
-let owned = [INITIAL_SKIN];
-let activeSkin = owned[0];
-let lastSpinTime = localStorage.getItem('lastSpinTime') || 0;
-
-function drawPenguin(pctx, x, y, skin, scale = 1.4) {
-    pctx.save();
-    pctx.translate(x, y);
-    pctx.scale(scale, scale);
-
-    let currentBodyColor = skin.color;
-    if (skin.type === 'rainbow') currentBodyColor = `hsl(${(Date.now() / 10) % 360}, 70%, 50%)`;
-    
-    const isCostume = (skin.type === 'fruit' || skin.type === 'icecream');
-    const bodyFill = isCostume ? "#1a1a2e" : currentBodyColor;
-
-    if (skin.name === 'King') {
-        pctx.fillStyle = "#aa0000"; pctx.beginPath(); pctx.roundRect(-25, -10, 50, 35, 10); pctx.fill();
-        pctx.fillStyle = "white"; pctx.fillRect(-25, 15, 50, 8);
-    }
-
-    pctx.strokeStyle = "black";
-    pctx.lineWidth = 2;
-    pctx.fillStyle = bodyFill;
-    
-    if (skin.type === 'gem') {
-        pctx.shadowBlur = 10;
-        pctx.shadowColor = skin.color;
-    }
-    if (skin.type === 'neon') { pctx.shadowBlur = 15; pctx.shadowColor = currentBodyColor; }
-    
-    pctx.beginPath();
-    if (skin.name === 'Banana') pctx.roundRect(-22, -35, 44, 65, 18);
-    else pctx.roundRect(-22, -22, 44, 44, 12);
-    pctx.fill(); pctx.stroke();
-    pctx.shadowBlur = 0;
-
-    if (skin.type === 'gem') {
-        pctx.strokeStyle = "rgba(255,255,255,0.4)";
-        pctx.lineWidth = 1.5;
-        pctx.beginPath();
-        pctx.moveTo(-15, -15); pctx.lineTo(0, -5); pctx.lineTo(15, -15);
-        pctx.moveTo(-18, 5); pctx.lineTo(0, 15); pctx.lineTo(18, 5);
-        pctx.stroke();
-    }
-
-    if (!isCostume && skin.type !== 'aurora') {
-        pctx.fillStyle = "white";
-        pctx.beginPath();
-        pctx.roundRect(-12, -4, 24, 20, 8);
-        pctx.fill();
-    }
-
-    if (isCostume) {
-        pctx.fillStyle = skin.color;
-        pctx.globalAlpha = 0.85; 
-        pctx.beginPath();
-        if (skin.name === 'Banana') pctx.roundRect(-22, -35, 44, 65, 18);
-        else pctx.roundRect(-22, -22, 44, 44, 12);
-        pctx.fill(); pctx.stroke();
-        pctx.globalAlpha = 1.0;
-
-        pctx.fillStyle = "#1a1a2e";
-        pctx.beginPath();
-        pctx.roundRect(-15, -16, 30, 22, 8);
-        pctx.fill();
-
-        if (['Apple', 'Orange Fruit', 'Banana', 'Kiwi'].includes(skin.name)) {
-            pctx.fillStyle = "#5d4037"; 
-            let stemY = (skin.name === 'Banana') ? -41 : -28;
-            pctx.fillRect(-2, stemY, 4, 7);
-        }
-        
-        if (skin.name === 'Watermelon') {
-            pctx.strokeStyle = "#1a472a"; pctx.lineWidth = 3;
-            for(let i=-15; i<=15; i+=10) {
-                pctx.beginPath(); pctx.moveTo(i, -18); pctx.lineTo(i, 18); pctx.stroke();
-            }
-        }
-
-        if (skin.type === 'icecream') {
-            if (skin.name === 'Cookie Dough' || skin.name === 'Cookies n Cream') {
-                pctx.fillStyle = skin.name === 'Cookie Dough' ? "#4b2c20" : "#111";
-                for(let i=0; i<6; i++) {
-                    pctx.beginPath(); pctx.arc(-8+(i*4)%16, 5+(i*3)%12, 1.8, 0, 7); pctx.fill();
-                }
-            }
-            pctx.fillStyle = "#d2b48c";
-            pctx.beginPath(); pctx.moveTo(-7, -22); pctx.lineTo(7, -22); pctx.lineTo(0, -36);
-            pctx.closePath(); pctx.fill();
-            pctx.strokeStyle = "#8b4513"; pctx.lineWidth = 1; pctx.stroke();
-        }
-    }
-
-    pctx.fillStyle = "black";
-    pctx.beginPath();
-    pctx.arc(-7, -10, 2.5, 0, Math.PI * 2); 
-    pctx.arc(7, -10, 2.5, 0, Math.PI * 2);
-    pctx.fill();
-
-    pctx.fillStyle = "#ffaa00"; 
-    pctx.beginPath();
-    pctx.moveTo(-6, -3);
-    pctx.lineTo(6, -3);
-    pctx.lineTo(0, 4);
-    pctx.fill();
-
-    if (skin.name === 'Boxer') {
-        pctx.fillStyle = "#ff0000"; 
-        pctx.beginPath(); pctx.arc(-22, 5, 8, 0, 7); pctx.fill(); pctx.stroke();
-        pctx.beginPath(); pctx.arc(22, 5, 8, 0, 7); pctx.fill(); pctx.stroke();
-    }
-    if (skin.name === 'King') {
-        pctx.fillStyle = "#ffff00"; pctx.beginPath();
-        pctx.moveTo(-15, -22); pctx.lineTo(-15, -35); pctx.lineTo(-7, -28);
-        pctx.lineTo(0, -38); pctx.lineTo(7, -28); pctx.lineTo(15, -35);
-        pctx.lineTo(15, -22); pctx.closePath(); pctx.fill(); pctx.stroke();
-    }
-    
-    pctx.restore();
-}
-
-function spawnPlayers() {
-    state.players = []; 
-    state.iceSize = { w: 560, h: 560 };
-    state.round = 1;
-    const getSafePos = () => {
-        let attempts = 0;
-        while(attempts < 50) {
-            const hw = state.iceSize.w / 2 - 50;
-            const hh = state.iceSize.h / 2 - 50;
-            const nx = 425 - hw + Math.random() * (hw * 2);
-            const ny = 300 - hh + Math.random() * (hh * 2);
-            const tooClose = state.players.some(p => Math.hypot(p.x - nx, p.y - ny) < RADIUS * 2.8);
-            if (!tooClose) return {x: nx, y: ny};
-            attempts++;
-        }
-        return {x: 425, y: 300};
-    };
-    const pPos = getSafePos();
-    state.players.push({ isPlayer: true, name: "Player", x: pPos.x, y: pPos.y, vx: 0, vy: 0, angle: 0, power: 5, skin: activeSkin, alive: true, lastHitBy: null });
-    for(let i=0; i<6; i++) {
-        const bSkin = getBotSkin();
-        const bPos = getSafePos();
-        state.players.push({ isPlayer: false, name: bSkin.name, x: bPos.x, y: bPos.y, vx: 0, vy: 0, angle: 0, power: 1, skin: bSkin, alive: true, lastHitBy: null });
-    }
-    startPhase('aiming');
-}
-
-function shrinkMap() {
-    state.iceSize.w -= 60; state.iceSize.h -= 60; 
-    addFeed("ICE SHRINKING!", "#ff4444");
-    const hw = state.iceSize.w / 2, hh = state.iceSize.h / 2;
-    state.players.forEach(p => {
-        if (!p.alive) return;
-        const outX = p.x < 425-hw || p.x > 425+hw, outY = p.y < 300-hh || p.y > 300+hh;
-        if (outX || outY) {
-            p.x = Math.max(425-hw + 25, Math.min(425+hw - 25, p.x));
-            p.y = Math.max(300-hh + 25, Math.min(300+hh - 25, p.y));
-            p.vx = 0; p.vy = 0;
-        }
-    });
-}
-
-function startPhase(p) {
-    state.phase = p;
-    if (p === 'aiming') {
-        state.timer = 10;
-        if ([3, 6, 9].includes(state.round)) shrinkMap();
-        state.players.forEach(pl => {
-            if (pl.isPlayer || !pl.alive) return;
-            const enemies = state.players.filter(t => t.alive && t !== pl);
-            const target = enemies[Math.floor(Math.random() * enemies.length)];
-            const hw = state.iceSize.w / 2, hh = state.iceSize.h / 2;
-            if (pl.x < 425-hw+80 || pl.x > 425+hw-80 || pl.y < 300-hh+80 || pl.y > 300+hh-80) {
-                pl.angle = Math.atan2(300 - pl.y, 425 - pl.x);
-                pl.power = 3 + Math.random() * 2;
-            } else if (target) {
-                pl.angle = Math.atan2(target.y - pl.y, target.x - pl.x);
-                pl.power = 2 + Math.random() * 6;
-            }
-        });
-    }
-}
-
-function physics() {
-    let moving = false;
-    state.players.forEach(p => {
-        if (!p.alive) return;
-        p.x += p.vx; p.y += p.vy; p.vx *= FRICTION; p.vy *= FRICTION;
-        if (Math.abs(p.vx) > 0.1 || Math.abs(p.vy) > 0.1) moving = true;
-        const hw = state.iceSize.w/2, hh = state.iceSize.h/2;
-        if (p.x < 425-hw || p.x > 425+hw || p.y < 300-hh || p.y > 300+hh) { 
-            p.alive = false; 
-            if (p.lastHitBy) {
-                addFeed(`${p.lastHitBy.name} knocked off ${p.name}!`, p.lastHitBy.skin.color);
-                if (p.lastHitBy.isPlayer) { state.kos++; checkMilestones(); }
-            } else addFeed(`${p.name} slipped off!`, "#ffffff");
-        }
-    });
-    for(let i=0; i<state.players.length; i++) {
-        for(let j=i+1; j<state.players.length; j++) {
-            const p1 = state.players[i], p2 = state.players[j];
-            if (!p1.alive || !p2.alive) continue;
-            const dx = p2.x - p1.x, dy = p2.y - p1.y, dist = Math.hypot(dx, dy);
-            if (dist < RADIUS * 2) {
-                const nx = dx/dist, ny = dy/dist, vNormal = (p2.vx - p1.vx)*nx + (p2.vy - p1.vy)*ny;
-                if (vNormal > 0) continue;
-                const imp = -1.8 * vNormal / 2;
-                p1.vx -= imp * nx; p1.vy -= imp * ny; p2.vx += imp * nx; p2.vy += imp * ny;
-                p1.lastHitBy = p2; p2.lastHitBy = p1;
-            }
-        }
-    }
-    if (!moving && state.phase === 'sliding') {
-        if (state.players.filter(p => p.alive).length <= 1 || state.round >= 10) endMatch();
-        else { state.round++; state.players.forEach(p => p.lastHitBy = null); startPhase('aiming'); }
-    }
-}
-
-function endMatch() {
-    state.phase = 'win';
-    const winner = state.players.find(p => p.alive);
-    document.getElementById('win-screen').classList.remove('hidden');
-    document.getElementById('mobile-controls').classList.add('hidden');
-    if (winner) {
-        document.getElementById('winnerDisplay').innerText = winner.name.toUpperCase();
-        var reward = winner.isPlayer ? 150 : 20;
-        if (winner.isPlayer) { state.wins++; checkMilestones(); }
-    } else { document.getElementById('winnerDisplay').innerText = "NO ONE!"; var reward = 10; }
-    state.ice += reward;
-    document.getElementById('rewardIce').innerText = reward;
-    save();
-}
-
-function checkMilestones() {
-    EXCLUSIVE_SKINS.forEach(s => {
-        if (s.reqType === 'wins' && state.wins >= s.req && !owned.some(o => o.name === s.name)) {
-            owned.push(s); addFeed(`UNLOCKED ${s.name.toUpperCase()}!`, "#ffd700");
-        }
-        if (s.reqType === 'kos' && state.kos >= s.req && !owned.some(o => o.name === s.name)) {
-            owned.push(s); addFeed(`UNLOCKED ${s.name.toUpperCase()}!`, "#ff0000");
-        }
-    });
-}
-
-function loop(now) {
-    const dt = (now - state.lastTime)/1000; state.lastTime = now;
-    if (state.phase === 'aiming' || state.phase === 'showing') {
-        state.timer -= dt;
-        if (state.timer <= 0) {
-            if (state.phase === 'aiming') { state.phase = 'showing'; state.timer = 1.2; }
-            else { 
-                state.phase = 'sliding'; 
-                state.players.forEach(p => { if (p.alive) { p.vx = Math.cos(p.angle) * p.power * SPEED_MULT; p.vy = Math.sin(p.angle) * p.power * SPEED_MULT; } });
-            }
-        }
-    }
-    if (state.phase === 'sliding') physics();
-    render();
-    updateSpinButton();
-    requestAnimationFrame(loop);
-}
-
-function render() {
-    ctx.clearRect(0,0,850,600);
-    ctx.fillStyle = "white";
-    const hw = state.iceSize.w/2, hh = state.iceSize.h/2;
-    ctx.beginPath(); ctx.roundRect(425-hw, 300-hh, state.iceSize.w, state.iceSize.h, 15); ctx.fill();
-    state.players.forEach(p => {
-        if (!p.alive) return;
-        drawPenguin(ctx, p.x, p.y, p.skin);
-        if ((state.phase === 'aiming' && p.isPlayer) || state.phase === 'showing') {
-            const len = 40 + p.power * 18; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle);
-            ctx.fillStyle = p.skin.type === 'rainbow' ? `hsl(${(Date.now() / 10) % 360}, 70%, 50%)` : p.skin.color;
-            ctx.strokeStyle = "black"; ctx.lineWidth = 4;
-            ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(len-20, -8); ctx.lineTo(len-20, -20); ctx.lineTo(len, 0); ctx.lineTo(len-20, 20); ctx.lineTo(len-20, 8); ctx.lineTo(0, 8); ctx.closePath(); 
-            ctx.stroke(); ctx.fill(); ctx.restore();
-        }
-    });
-    document.getElementById('iceTxt').innerText = state.ice;
-    document.getElementById('winTxt').innerText = state.wins;
-    document.getElementById('koTxt').innerText = state.kos;
-    document.getElementById('timerTxt').innerText = Math.max(0, Math.ceil(state.timer));
-    document.getElementById('roundTxt').innerText = `${state.round}/10`;
-}
-
-function drawWheel() {
-    const wCanvas = document.getElementById('wheel-canvas'); const wCtx = wCanvas.getContext('2d');
-    wCtx.clearRect(0,0,300,300); let currentAngle = 0;
-    WHEEL_REWARDS.forEach((rew) => {
-        const sliceAngle = (rew.chance / 100) * (2 * Math.PI);
-        wCtx.fillStyle = rew.color; wCtx.beginPath(); wCtx.moveTo(150, 150);
-        wCtx.arc(150, 150, 140, currentAngle, currentAngle + sliceAngle); wCtx.fill(); wCtx.stroke();
-        wCtx.save(); wCtx.translate(150, 150); wCtx.rotate(currentAngle + sliceAngle / 2);
-        wCtx.fillStyle = "white"; wCtx.font = "bold 10px Arial"; wCtx.fillText(rew.name, 50, 0); wCtx.restore();
-        currentAngle += sliceAngle;
-    });
-}
-
-function updateSpinButton() {
-    const btn = document.getElementById('spinBtn'); const now = Date.now(); const wait = 5 * 60 * 1000;
-    if (now - lastSpinTime < wait) {
-        const rem = Math.ceil((wait - (now - lastSpinTime)) / 1000);
-        btn.innerText = `${Math.floor(rem/60)}:${(rem%60).toString().padStart(2,'0')}`; btn.disabled = true;
-    } else { btn.innerText = "SPIN (FREE)"; btn.disabled = false; }
-}
-
-document.getElementById('spinBtn').onclick = () => {
-    if (state.spinning) return;
-    state.spinning = true; const wheel = document.getElementById('wheel-canvas');
-    let r = Math.random()*100, c = 0, winIdx = 0;
-    for(let i=0; i<WHEEL_REWARDS.length; i++) { c += WHEEL_REWARDS[i].chance; if(r <= c) { winIdx = i; break; } }
-    let angleSum = 0; for(let i=0; i < winIdx; i++) angleSum += WHEEL_REWARDS[i].chance;
-    let targetSliceMid = angleSum + (WHEEL_REWARDS[winIdx].chance / 2);
-    let targetDeg = 360 - (targetSliceMid / 100 * 360) - 90;
-    wheel.style.transform = `rotate(${1440 + targetDeg}deg)`;
-    setTimeout(() => {
-        state.spinning = false; lastSpinTime = Date.now(); localStorage.setItem('lastSpinTime', lastSpinTime);
-        const won = WHEEL_REWARDS[winIdx];
-        if (won.type === 'ice') { state.ice += won.val; addFeed(`+${won.val} Ice!`, "#ffff00"); }
-        else { if(!owned.some(o => o.name === won.val.name)) owned.push(won.val); activeSkin = won.val; addFeed(`WON ${won.val.name.toUpperCase()}!`, "#00ffff"); }
-        save();
-    }, 4000);
-};
-
-function renderShop() {
-    const eggG = document.getElementById('eggGrid'); eggG.innerHTML = '';
-    Object.keys(EGGS).forEach(k => {
-        const e = EGGS[k]; const d = document.createElement('div'); d.className = 'card';
-        d.innerHTML = `<span style="font-size:45px;">${e.icon}</span><b>${e.name}</b><span style="color:var(--primary);">${e.cost} Ice</span>`;
-        d.onclick = () => showPreview(k); eggG.appendChild(d);
-    });
-    const exG = document.getElementById('exclusiveGrid'); exG.innerHTML = '';
-    EXCLUSIVE_SKINS.forEach(s => {
-        const isOwned = owned.some(o => o.name === s.name);
-        const d = document.createElement('div'); d.className = `card ${isOwned ? '' : 'locked'}`;
-        const mc = document.createElement('canvas'); mc.width=60; mc.height=70;
-        drawPenguin(mc.getContext('2d'), 30, 35, s, 0.8);
-        d.innerHTML = `<img src="${mc.toDataURL()}"><b>${s.name}</b><span style="font-size:10px; color:var(--accent)">${s.source}</span>`;
-        exG.appendChild(d);
-    });
-}
-
-function renderCollection() {
-    const grid = document.getElementById('skinGrid'); grid.innerHTML = '';
-    owned.forEach(s => {
-        const d = document.createElement('div'); d.className = `card ${s.name === activeSkin.name ? 'equipped' : ''}`;
-        const mc = document.createElement('canvas'); mc.width=60; mc.height=70;
-        drawPenguin(mc.getContext('2d'), 30, 35, s, 0.8);
-        d.innerHTML = `<img src="${mc.toDataURL()}"><span>${s.name}</span>`;
-        d.onclick = () => { activeSkin = s; save(); renderCollection(); };
-        grid.appendChild(d);
-    });
-}
-
-function showPreview(key) {
-    const e = EGGS[key]; document.getElementById('shop-main').classList.add('hidden'); document.getElementById('shop-preview').classList.remove('hidden');
-    document.getElementById('previewTitle').innerText = e.name;
-    const list = document.getElementById('previewList'); list.innerHTML = '';
-    e.pool.forEach(p => { 
-        const mc = document.createElement('canvas'); mc.width=40; mc.height=45; drawPenguin(mc.getContext('2d'), 20, 22, p, 0.5);
-        const row = document.createElement('div'); row.style = "padding:8px; border-bottom:1px solid #444; display:flex; justify-content:space-between; align-items:center;";
-        row.innerHTML = `<div style="display:flex; align-items:center; gap:10px;"><img src="${mc.toDataURL()}"><b>${p.name}</b></div><span>${p.chance}%</span>`;
-        list.appendChild(row);
-    });
-    document.getElementById('confirmBuyBtn').innerText = `BUY EGG (${e.cost} ICE)`;
-    document.getElementById('confirmBuyBtn').onclick = () => {
-        if (state.ice >= e.cost) {
-            state.ice -= e.cost; let r = Math.random()*100, c = 0, won = e.pool[0];
-            for(let p of e.pool) { c += p.chance; if(r <= c) { won = p; break; } }
-            if(!owned.some(o => o.name === won.name)) owned.push(won); activeSkin = won; save(); togglePreview(false);
-        } else alert("Not enough Ice!");
-    };
-}
-
-function addFeed(m, c) { const f = document.getElementById('kill-feed'); const d = document.createElement('div'); d.className = 'feed-item'; d.style.borderLeftColor = c; d.innerText = m; f.prepend(d); setTimeout(() => d.remove(), 4000); }
-function adjustPower(v) { const p = state.players.find(x => x.isPlayer); if(p) { p.power = Math.max(1, Math.min(10, p.power + v)); document.getElementById('power-box').innerText = "SPEED: " + p.power; } }
-function save() { localStorage.setItem('NK_Legacy_V4', JSON.stringify({ice: state.ice, wins: state.wins, kos: state.kos, owned, activeSkin})); }
-function load() { const d = JSON.parse(localStorage.getItem('NK_Legacy_V4')); if(d) { state.ice = d.ice; state.wins = d.wins; state.kos = d.kos; owned = d.owned; activeSkin = d.activeSkin; } }
-function deleteProgress() { if(confirm("Reset all Ice, Wins, and Skins?")) { localStorage.clear(); location.reload(); }}
-
-window.addEventListener('keydown', e => { if(e.key.toLowerCase()==='q') adjustPower(-1); if(e.key.toLowerCase()==='e') adjustPower(1); });
-document.getElementById('btnQ').onclick = () => adjustPower(-1);
-document.getElementById('btnE').onclick = () => adjustPower(1);
-canvas.addEventListener('mousemove', e => { if(state.phase !== 'aiming') return; const p = state.players.find(x => x.isPlayer); const r = canvas.getBoundingClientRect(); if(p) p.angle = Math.atan2(e.clientY - r.top - (p.y*(r.height/600)), e.clientX - r.left - (p.x*(r.width/850))); });
-
-document.getElementById('playBtn').onclick = () => { document.getElementById('menu-screen').classList.add('hidden'); document.getElementById('wheel-container').classList.add('hidden'); document.getElementById('mobile-controls').classList.remove('hidden'); spawnPlayers(); };
-document.getElementById('shopBtn').onclick = () => { document.getElementById('menu-screen').classList.add('hidden'); document.getElementById('wheel-container').classList.add('hidden'); document.getElementById('shop-screen').classList.remove('hidden'); renderShop(); };
-document.getElementById('skinsBtn').onclick = () => { document.getElementById('menu-screen').classList.add('hidden'); document.getElementById('wheel-container').classList.add('hidden'); document.getElementById('skins-screen').classList.remove('hidden'); renderCollection(); };
-
-function togglePreview(s) { document.getElementById('shop-main').classList.toggle('hidden', s); document.getElementById('shop-preview').classList.toggle('hidden', !s); }
-function closeOverlay() { document.querySelectorAll('.overlay').forEach(o => { if(o.id !== 'menu-screen') o.classList.add('hidden'); }); document.getElementById('menu-screen').classList.remove('hidden'); document.getElementById('wheel-container').classList.remove('hidden'); }
-function getBotSkin() { const pool = Object.values(EGGS).flatMap(e => e.pool); return pool[Math.floor(Math.random() * pool.length)]; }
-
-load();
-drawWheel();
-requestAnimationFrame(loop);
-</script>
+  <script src="./data/cards.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>

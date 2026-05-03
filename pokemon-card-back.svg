@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 1050" role="img" aria-labelledby="title desc">
+  <title id="title">Pokemon card back</title>
+  <desc id="desc">Blue card back with a Pokeball in the center.</desc>
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="44%" r="58%">
+      <stop offset="0%" stop-color="#4bb8ff"/>
+      <stop offset="45%" stop-color="#1569c7"/>
+      <stop offset="100%" stop-color="#0a2e73"/>
+    </radialGradient>
+    <radialGradient id="ballGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="60%" stop-color="#dfe8f8"/>
+      <stop offset="100%" stop-color="#92a5cb"/>
+    </radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#03142d" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <rect width="750" height="1050" rx="42" fill="#08214f"/>
+  <rect x="16" y="16" width="718" height="1018" rx="32" fill="url(#bgGlow)" stroke="#ffce45" stroke-width="8"/>
+
+  <g opacity="0.9">
+    <ellipse cx="375" cy="270" rx="230" ry="128" fill="#71d4ff" opacity="0.22"/>
+    <ellipse cx="375" cy="790" rx="230" ry="128" fill="#71d4ff" opacity="0.22"/>
+    <ellipse cx="375" cy="525" rx="320" ry="196" fill="#10387e" opacity="0.54"/>
+  </g>
+
+  <g filter="url(#shadow)">
+    <path d="M155 525c0-120 98-218 220-218h0c122 0 220 98 220 218" fill="none" stroke="#ffd447" stroke-width="26" stroke-linecap="round"/>
+    <path d="M595 525c0 120-98 218-220 218h0c-122 0-220-98-220-218" fill="none" stroke="#ffd447" stroke-width="26" stroke-linecap="round"/>
+    <circle cx="375" cy="525" r="198" fill="url(#ballGlow)" stroke="#1a1f35" stroke-width="20"/>
+    <path d="M177 525a198 198 0 0 1 396 0Z" fill="#ec4a43"/>
+    <rect x="160" y="509" width="430" height="32" rx="16" fill="#1a1f35"/>
+    <circle cx="375" cy="525" r="66" fill="#f6f9ff" stroke="#1a1f35" stroke-width="18"/>
+    <circle cx="375" cy="525" r="28" fill="#dce5f7"/>
+  </g>
+
+  <g fill="#ffd447" font-family="Trebuchet MS, Segoe UI, sans-serif" font-weight="900" text-anchor="middle" stroke="#19408d" stroke-width="12" paint-order="stroke fill">
+    <text x="375" y="188" font-size="118">POKEMON</text>
+    <text x="375" y="876" font-size="118" transform="rotate(180 375 876)">POKEMON</text>
+  </g>
+</svg>
